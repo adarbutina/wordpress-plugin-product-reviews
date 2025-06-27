@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
 
 class Simple_Reviews {
     public function __construct() {
-        add_action('init', [$this, 'register_product_review_cpt']);        
+        add_action('init', [$this, 'register_product_review_cpt']);
     }
 
  
