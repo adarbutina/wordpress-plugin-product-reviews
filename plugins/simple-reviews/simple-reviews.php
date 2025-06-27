@@ -13,6 +13,9 @@ if (!defined('ABSPATH')) {
 class Simple_Reviews {
     public function __construct() {
         add_action('init', [$this, 'register_product_review_cpt']);
+        add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_action('save_post_product_review', [$this, 'save_sentiment'], 10, 2);
+        add_shortcode('product_reviews', [$this, 'display_product_reviews']);
     }
 
  
@@ -55,6 +58,9 @@ class Simple_Reviews {
         return rest_ensure_response(['sentiment' => $random_sentiment, 'score' => $sentiment_scores[$random_sentiment]]);
     }
 
+    /**
+     * Returns the latest 5 product reviews.
+     */
     public function get_review_history() {
         $reviews = get_posts([
             'post_type'      => 'product_review',
@@ -74,6 +80,25 @@ class Simple_Reviews {
         }
 
         return rest_ensure_response($response);
+    }
+
+    public function save_sentiment($post_id, $post) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ($post->post_type !== 'product_review') {
+            return;
+        }
+
+        $sentiment_scores = ['positive' => 0.9, 'negative' => 0.2, 'neutral' => 0.5];
+        $sentiment = array_rand($sentiment_scores);
+        $sentiment_score = $sentiment_scores[$sentiment];
+
+        if (!isset($sentiment)) {
+            update_post_meta($post_id, 'sentiment', $sentiment);
+            update_post_meta($post_id, 'sentiment_score', $sentiment_score);
+        }
     }
 
     public function display_product_reviews() {
